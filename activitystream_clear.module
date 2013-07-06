@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @author : Jean-François Lefebvre (lefebvre.jf@gmail.com)
+ * @file
+ * This module add a button in the activitystream settings page allowing the clear all streams items imported.
+ */
+
+/**
+ * implementation of hook_menu()
+ */
+
+function activitystream_clear_menu() {
+  $menu['admin/activitystream/clear']  = array(
+      'title' => 'Content',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('activitystream_clear_confirm'),
+      'access arguments' => array('administer site configuration'),
+      'type' => MENU_CALLBACK,
+      'file' => 'activitystream_clear.module',
+  );
+  return $menu;
+}
+
+function activitystream_clear_activitystream_admin() {
+    
+    $form['activitystream_clear_items'] = array(
+        '#type' => 'submit',
+        '#value' => 'Clear activity streams items',
+        '#submit' => array('activitystream_clear_submit'),
+        );
+
+    return $form;
+}
+
+function activitystream_clear_submit($form, &$form_state) {
+    $destination = drupal_get_destination();
+    $form_state['redirect'] = array('admin/activitystream/clear', $destination);
+}
+
+function activitystream_clear_confirm(&$form_state) {
+    $destination = isset($_GET['destination']) ? $_GET['destination'] : '';
+    $form['destination'] = array(
+        '#type' => 'value',
+        '#value' => $destination,
+        );
+
+    return confirm_form($form,
+        t('Are you sure you want to clear the activity streams items ?'),
+        $destination,
+        t('This action cannot be undone.'),
+        t('Yes'),
+        t('No')
+    );
+}
+
+function activitystream_clear_confirm_submit($form, &$form_state) {
+    db_query("DELETE FROM {node_revisions} WHERE nid IN (SELECT nid FROM {node} WHERE type='%s')", array('type'=>'activitystream'));
+    db_query("DELETE FROM {node} WHERE type='%s'", array('type'=>'activitystream'));
+    drupal_set_message("The activity streams items have been cleared.");
+    $form_state['redirect'] = $form_state['values']['destination'];
+}

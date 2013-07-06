@@ -1,0 +1,6 @@
+name = Clear activity stream items button
+description = add a Clear activitystream items button to the "Admin settings activitystream" page
+package = Activity Stream
+core = 6.x
+dependencies[] = activitystream
+
